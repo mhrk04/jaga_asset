@@ -1,36 +1,115 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# JagaAsset — IT Asset Management on Solana
+
+IT asset management for Malaysian SMEs with 10–50 staff. Scan invoices, track custody on Solana, and offboard employees in one click.
+
+## Features
+
+- **AI Invoice Ingestion** — Upload a receipt photo; Gemini AI extracts merchant, model, serial number, price, and warranty automatically.
+- **Chain of Custody** — Every asset movement (register, assign, transfer, decommission) generates a SHA-256 hash written to Solana Devnet via the Memo Program. Tamper-proof, publicly verifiable.
+- **Employee Offboarding** — One click returns all assigned assets, records custody transfers on-chain, flags the user in Notion workspace, and sends a confirmation email.
+- **Notion Integration** — Configure your Notion API key to auto-provision employee pages on add and revoke access on offboarding.
+- **Multi-tenant** — Per-organisation isolation via email domain. Owner/manager role-based access.
+- **On-chain Audit Log** — Full event history with links to Solana Explorer.
+
+## Tech Stack
+
+| Layer | Choice |
+|---|---|
+| Framework | Next.js 15 (App Router, TypeScript) |
+| Auth | Supabase Auth (email/password) |
+| Database | Supabase PostgreSQL |
+| AI | Google Gemini API |
+| On-chain | Solana Web3.js (Memo Program, Devnet) |
+| Billing | Stripe (test/sandbox mode) |
+| Email | Resend |
+| Integrations | Notion API |
+| UI | Tailwind CSS v4 + shadcn/ui |
+| Fonts | Geist via next/font |
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+- Node.js 20+
+- A Supabase project
+- A Solana Devnet fee-payer wallet
+- Stripe test keys
+- Resend API key
+- Google Gemini API key
+- Notion integration token (optional)
+
+### Environment Variables
+
+Copy `.env.local.example` to `.env.local` and fill in your keys:
+
+```env
+# Supabase
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
+
+# Solana (Devnet)
+SOLANA_FEE_PAYER_PRIVATE_KEY=
+
+# Stripe (test mode)
+STRIPE_SECRET_KEY=
+STRIPE_WEBHOOK_SECRET=
+STRIPE_PRICE_PRO=
+
+# Resend
+RESEND_API_KEY=
+
+# Google Gemini
+GOOGLE_AI_API_KEY=
+
+# App
+NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Run Dev Server
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npm install
+npm run dev
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Open [http://localhost:3000](http://localhost:3000).
 
-## Learn More
+## Project Structure
 
-To learn more about Next.js, take a look at the following resources:
+```
+src/
+├── app/
+│   ├── (app)/          # Authenticated pages (dashboard, assets, employees, etc.)
+│   ├── (auth)/         # Login page
+│   ├── api/            # All API routes (auth, stripe, notion, employees, etc.)
+│   └── pricing/         # Public pricing page
+├── components/
+│   ├── dashboard/      # Dashboard metric cards
+│   ├── employees/      # Employee table, offboarding modal
+│   └── ui/             # shadcn/ui components (Modal, Alert, Table, Badge, etc.)
+└── lib/
+    ├── supabase/       # Supabase client (server, client, admin)
+    ├── solana.ts       # Solana connection + fee payer
+    ├── gemini.ts       # Google Gemini AI integration
+    ├── org.ts          # Org resolution + role checks
+    ├── plan.ts         # Plan/limit enforcement
+    └── utils.ts        # Formatting, hashing utilities
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Sandbox Notice
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+This app is in development. Stripe is in test mode. **Do not enter real credit card details.**
+Use the test card `4242 4242 4242 4242` with any future expiry and any CVC.
 
-## Deploy on Vercel
+## On-chain Recording
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Asset custody events are hashed via SHA-256 and written to Solana Devnet using the [Memo Program](https://spl.solana.com/memo). Each event stores:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- App identifier (`jagaasset`)
+- Asset ID
+- Event type (Registered, Assigned, Transferred, Decommissioned)
+- SHA-256 hash
+- Timestamp
+
+View any event on [Solana Explorer](https://explorer.solana.com/?cluster=devnet) by its transaction signature.
